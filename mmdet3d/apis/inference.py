@@ -1,4 +1,6 @@
+from mmdet3d.core.bbox.structures import base_box3d
 import mmcv
+import time
 import numpy as np
 import re
 import torch
@@ -27,7 +29,7 @@ def convert_SyncBN(config):
         for item in config:
             if item == 'norm_cfg':
                 config[item]['type'] = config[item]['type']. \
-                                    replace('naiveSyncBN', 'BN')
+                    replace('naiveSyncBN', 'BN')
             else:
                 convert_SyncBN(config[item])
 
@@ -165,9 +167,15 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
     # LiDAR to image conversion
     if box_mode_3d == Box3DMode.LIDAR:
         rect = info['calib']['R0_rect'].astype(np.float32)
-        Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
-        P2 = info['calib']['P2'].astype(np.float32)
-        lidar2img = P2 @ rect @ Trv2c
+        #Trv2c = info['calib']['Tr_velo_to_cam'].astype(np.float32)
+        Trv2c = np.array([0.08088629, -0.99590131, -0.04047205, -0.15610122, 0.06293044,
+                          0.04562682, -0.9969744, -0.3785559, 0.99473472, 0.07809463, 0.06636309, -0.59070911, 0., 0., 0., 1.]).reshape(4, 4)
+        #P2 = info['calib']['P2'].astype(np.float32)
+        P2 = np.array([649.65825827, 0., 302.21275333, 0.,
+                       656.18334152, 244.27286533, 0., 0., 1.]).reshape(3, 3).astype(np.float32)
+        P2 = np.insert(P2, 3, [0., 0., 0.], axis=1)
+        P2 = np.insert(P2, 3, [0., 0., 0., 0.], axis=0)
+        lidar2img = P2 @ Trv2c
         data['img_metas'][0].data['lidar2img'] = lidar2img
     elif box_mode_3d == Box3DMode.DEPTH:
         data['calib'][0]['Rt'] = data['calib'][0]['Rt'].astype(np.float32)
@@ -187,8 +195,13 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
             data['calib'][0]['K'] = data['calib'][0]['K'][0].data
 
     # forward the model
+    s = time.time()
     with torch.no_grad():
         result = model(return_loss=False, rescale=True, **data)
+    e = time.time()
+    print("forward time >> ", e-s)
+    print("DATA \n", data)
+    print("*"*50)
     return result, data
 
 
