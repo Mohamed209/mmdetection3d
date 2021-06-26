@@ -174,7 +174,7 @@ def inference_multi_modality_detector(model, pcd, image, ann_file):
         P2 = np.array([649.65825827, 0., 302.21275333, 0.,
                        656.18334152, 244.27286533, 0., 0., 1.]).reshape(3, 3).astype(np.float32)
         P2 = np.insert(P2, 3, [0., 0., 0.], axis=1)
-        P2 = np.insert(P2, 3, [0., 0., 0., 0.], axis=0)
+        #P2 = np.insert(P2, 3, [0., 0., 0., 0.], axis=0)
         lidar2img = P2 @ Trv2c
         data['img_metas'][0].data['lidar2img'] = lidar2img
     elif box_mode_3d == Box3DMode.DEPTH:
