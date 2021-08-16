@@ -165,4 +165,3 @@ We wish that the toolbox and benchmark could serve the growing research communit
 ## to test multiple frames
 - create two new folders `all_frames` contain png files and `all_frames_ld` contain .bin files
 - then run `python test_multiple_frames.py`
-
